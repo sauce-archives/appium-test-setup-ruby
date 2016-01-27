@@ -1,36 +1,37 @@
 require 'appium_lib'
+require 'test/unit'
 
-desired_caps = {
-  caps:       {
-    testobject_api_key: ENV['TESTOBJECT_API_KEY'],
-    testobject_app_id: '1',
-    testobject_device: 'Motorola_Moto_G_2nd_gen_real'
-  },
-  appium_lib: {
-    server_url: 'https://app.testobject.com:443/api/appium/wd/hub',
-    wait: 10
-  }
-}
+class LoginTest < Test::Unit::TestCase
+  def setup
+    desired_caps = {
+        caps:       {
+            #Read API key from environment variable.
+            #Alternatively, you can just write the string here
+            testobject_api_key: ENV['TESTOBJECT_API_KEY'],
 
-# Start the driver
-Appium::Driver.new(desired_caps).start_driver
+            testobject_app_id: '1',
+            testobject_device: 'Motorola_Moto_G_2nd_gen_real'
+        },
+        appium_lib: {
+            server_url: 'https://app.testobject.com:443/api/appium/wd/hub',
+            wait: 10
+        }
+    }
 
-module Komoot
-  module Android
-    # Add all the Appium library methods to Test to make
-    # calling them look nicer.
-    Appium.promote_singleton_appium_methods Komoot
+    # Start the driver
+    @driver = Appium::Driver.new(desired_caps).start_driver
+  end
 
-    find_element(:id, 'de.komoot.android:id/button_mail_login').click
-    find_element(:id, 'de.komoot.android:id/txt_user_name').send_keys("jfjfkdl")
-    find_element(:id, 'de.komoot.android:id/txt_password').send_keys("lakjsdfja")
-    find_element(:id, 'de.komoot.android:id/btn_login').click
+  def test_login_with_invalid_credentials
+    @driver.find_element(:id, 'de.komoot.android:id/button_mail_login').click
+    @driver.find_element(:id, 'de.komoot.android:id/txt_user_name').send_keys("jfjfkdl")
+    @driver.find_element(:id, 'de.komoot.android:id/txt_password').send_keys("lakjsdfja")
+    @driver.find_element(:id, 'de.komoot.android:id/btn_login').click
+    warningMessage = @driver.find_element(:id, "android:id/message")
+    assert_equal("Email address invalid.", warningMessage.text)
+  end
 
-    find_element(:id, "android:id/message")
-
-
-    # Quit when you're done!
-    driver_quit
-    puts 'Tests Succeeded!'
+  def teardown
+    @driver.quit
   end
 end
